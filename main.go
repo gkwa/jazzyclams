@@ -15,6 +15,7 @@ import (
 var (
 	additionalDirs = []string{"~/pdev/taylormonacelli/northflier"} // specify additional directories here
 	logFlag        bool
+	gitPullFlag    bool
 	files          StringArray
 )
 
@@ -73,6 +74,7 @@ func checkForDuplicates(strSlice []string) (bool, string) {
 
 func main() {
 	flag.BoolVar(&logFlag, "log", false, "Enable logging")
+	flag.BoolVar(&gitPullFlag, "git-pull", false, "Enable git pull")
 	flag.Var(&files, "file", "File to search for (this flag can be set multiple times)")
 	flag.Parse()
 
@@ -150,13 +152,15 @@ func main() {
 				continue
 			}
 
-			if logFlag {
-				log.Printf("Changing working directory to: %s\n", dir)
-				log.Println("Executing git pull command...")
-			}
+			if gitPullFlag {
+				if logFlag {
+					log.Printf("Changing working directory to: %s\n", dir)
+					log.Println("Executing git pull command...")
+				}
 
-			cmd := exec.Command("git", "pull")
-			cmd.Run()
+				cmd := exec.Command("git", "-C", dir, "pull")
+				cmd.Run()
+			}
 		}
 	}
 }
