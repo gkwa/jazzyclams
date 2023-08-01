@@ -22,7 +22,7 @@ var (
 type StringArray []string
 
 func (i *StringArray) String() string {
-	return fmt.Sprintf("%s", strings.Join(*i, ","))
+	return strings.Join(*i, ",")
 }
 
 func (i *StringArray) Set(value string) error {
