@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -30,14 +31,18 @@ func (i *StringArray) Set(value string) error {
 	return nil
 }
 
-func expandHomeDir(dirs []string) ([]string, error) {
+func expandHomeDir(dirs ...string) ([]string, error) {
+	if len(dirs) == 0 {
+		return nil, errors.New("at least one directory path should be provided")
+	}
+
 	expandedDirs := make([]string, len(dirs))
 	for i, dir := range dirs {
-		dir, err := homedir.Expand(dir)
+		expandedDir, err := homedir.Expand(dir)
 		if err != nil {
 			return nil, err
 		}
-		expandedDirs[i] = dir
+		expandedDirs[i] = expandedDir
 	}
 	return expandedDirs, nil
 }
@@ -54,18 +59,25 @@ func getCandidateDirs() ([]string, error) {
 
 	// Add a wildcard pattern to match directories with any number (e.g., northflier1, northflier2, ...)
 	wildcardDirPattern := "~/pdev/tmp/northflier*"
-	wildcardDirs, err := filepath.Glob(wildcardDirPattern)
+
+	// Append additionalDirs to the map
+	wildcardDirPatterns, err := expandHomeDir(wildcardDirPattern)
 	if err != nil {
 		return nil, err
 	}
+	for _, wildDir := range wildcardDirPatterns {
+		wildcardDirs, err := filepath.Glob(wildDir)
+		if err != nil {
+			return nil, err
+		}
 
-	// Add the wildcard directories to the map
-	for _, dir := range wildcardDirs {
-		dirsMap[dir] = true
+		for _, wcd := range wildcardDirs {
+			dirsMap[wcd] = true
+		}
 	}
 
 	// Append additionalDirs to the map
-	expandedDirs, err := expandHomeDir(additionalDirs)
+	expandedDirs, err := expandHomeDir(additionalDirs...)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +90,7 @@ func getCandidateDirs() ([]string, error) {
 		dirs = append(dirs, dir)
 	}
 
-	allExpandedDirs, err := expandHomeDir(dirs)
+	allExpandedDirs, err := expandHomeDir(dirs...)
 	if err != nil {
 		return nil, err
 	}
