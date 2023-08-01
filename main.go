@@ -43,16 +43,41 @@ func expandHomeDir(dirs []string) ([]string, error) {
 }
 
 func getCandidateDirs() ([]string, error) {
+	dirsMap := make(map[string]bool) // Map to store unique directories
 	var dirs []string
+
+	// Add directories with sequential numbers
 	for i := 1; i <= 10; i++ {
 		dir := fmt.Sprintf("~/pdev/tmp/northflier%d", i)
-		dirs = append(dirs, dir)
+		dirsMap[dir] = true
 	}
+
+	// Add a wildcard pattern to match directories with any number (e.g., northflier1, northflier2, ...)
+	wildcardDirPattern := "~/pdev/tmp/northflier*"
+	wildcardDirs, err := filepath.Glob(wildcardDirPattern)
+	if err != nil {
+		return nil, err
+	}
+
+	// Add the wildcard directories to the map
+	for _, dir := range wildcardDirs {
+		dirsMap[dir] = true
+	}
+
+	// Append additionalDirs to the map
 	expandedDirs, err := expandHomeDir(additionalDirs)
 	if err != nil {
 		return nil, err
 	}
-	dirs = append(dirs, expandedDirs...)
+	for _, dir := range expandedDirs {
+		dirsMap[dir] = true
+	}
+
+	// Convert the unique directories from the map back to the slice
+	for dir := range dirsMap {
+		dirs = append(dirs, dir)
+	}
+
 	allExpandedDirs, err := expandHomeDir(dirs)
 	if err != nil {
 		return nil, err
